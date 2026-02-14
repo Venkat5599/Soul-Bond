@@ -6,6 +6,15 @@ const Web3Context = createContext(null)
 
 const USE_LOCAL = import.meta.env.VITE_USE_LOCAL === 'true'
 
+// Sepolia Testnet
+const SEPOLIA_TESTNET = {
+  chainId: '0xaa36a7',
+  chainName: 'Sepolia',
+  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+  rpcUrls: ['https://rpc.sepolia.org'],
+  blockExplorerUrls: ['https://sepolia.etherscan.io/'],
+}
+
 // Polygon Amoy Testnet
 const POLYGON_TESTNET = {
   chainId: '0x13882',
@@ -24,8 +33,8 @@ const HARDHAT_LOCAL = {
   blockExplorerUrls: [],
 }
 
-const TARGET_NETWORK = USE_LOCAL ? HARDHAT_LOCAL : POLYGON_TESTNET
-const TARGET_CHAIN_ID = USE_LOCAL ? 31337 : 80002
+const TARGET_NETWORK = USE_LOCAL ? HARDHAT_LOCAL : SEPOLIA_TESTNET
+const TARGET_CHAIN_ID = USE_LOCAL ? 31337 : 11155111
 
 export function Web3Provider({ children }) {
   const [account, setAccount] = useState(null)
