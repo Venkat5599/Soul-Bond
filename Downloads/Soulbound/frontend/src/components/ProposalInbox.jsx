@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext'
 import { getProposalsForRecipient, acceptProposalOnChain, rejectProposalOnChain } from '../services/contractService'
 import { uploadImageToIPFS, uploadMetadataToIPFS, createCoupleMetadata } from '../services/ipfsService'
 import toast from 'react-hot-toast'
+import confetti from 'canvas-confetti'
 
 export default function ProposalInbox() {
   const { account, signer, provider } = useWeb3()
@@ -71,14 +72,14 @@ export default function ProposalInbox() {
 
     try {
       // 1. Upload couple image to IPFS
-      toast.loading('Uploading image to IPFS...', { id: 'mint' })
+      toast.loading('✨ Capturing your beautiful moment...', { id: 'mint' })
       const imageURI = await uploadImageToIPFS(
         imageData,
         `${proposal.senderName}-${proposal.receiverName}`
       )
 
       // 2. Create and upload metadata to IPFS
-      toast.loading('Uploading metadata...', { id: 'mint' })
+      toast.loading('💫 Preserving your love story...', { id: 'mint' })
       const metadata = createCoupleMetadata({
         senderName: proposal.senderName,
         receiverName: proposal.receiverName,
@@ -87,7 +88,7 @@ export default function ProposalInbox() {
       const metadataURI = await uploadMetadataToIPFS(metadata)
 
       // 3. Accept proposal on-chain (auto-mints CoupleNFT)
-      toast.loading('Minting SoulBound NFT on-chain...', { id: 'mint' })
+      toast.loading('💝 Forging your eternal bond on-chain...', { id: 'mint' })
       const result = await acceptProposalOnChain(
         signer,
         proposal.tokenId,
@@ -103,6 +104,32 @@ export default function ProposalInbox() {
       })
 
       toast.success('SoulBound Couple NFT minted on-chain! 🎉', { id: 'mint' })
+      
+      // Trigger confetti celebration!
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff6b6b', '#ff69b4', '#9b59b6', '#e74c3c']
+      })
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#ff6b6b', '#ff69b4', '#9b59b6']
+        })
+      }, 250)
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#ff6b6b', '#ff69b4', '#9b59b6']
+        })
+      }, 400)
     } catch (err) {
       console.error('Minting failed:', err)
       toast.error(`Minting failed: ${(err.reason || err.message || '').slice(0, 80)}`, { id: 'mint' })

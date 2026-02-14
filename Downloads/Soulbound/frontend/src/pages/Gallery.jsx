@@ -136,13 +136,27 @@ export default function Gallery() {
                     <p className={`text-xs font-mono mb-1 ${isDark ? 'text-white/30' : 'text-[#1a1a1a]/30'}`}>
                       {nft.person1.slice(0, 6)}...{nft.person1.slice(-4)} & {nft.person2.slice(0, 6)}...{nft.person2.slice(-4)}
                     </p>
-                    <p className={`text-xs mb-3 ${isDark ? 'text-white/30' : 'text-[#1a1a1a]/30'}`}>
-                      {new Date(nft.timestamp).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
+                    
+                    {/* Love Story Timeline */}
+                    <div className={`my-3 p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                      <div className="flex items-center gap-2 text-xs mb-1">
+                        <Heart className="w-3 h-3 text-pink-500" />
+                        <span className={isDark ? 'text-white/50' : 'text-black/50'}>
+                          Bond Forged
+                        </span>
+                      </div>
+                      <p className={`text-xs ${isDark ? 'text-white/30' : 'text-[#1a1a1a]/30'}`}>
+                        {new Date(nft.timestamp).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-pink-400/60' : 'text-pink-600/60'}`}>
+                        {Math.floor((Date.now() - nft.timestamp) / (1000 * 60 * 60 * 24))} days together
+                      </p>
+                    </div>
+                    
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleShare(nft)}

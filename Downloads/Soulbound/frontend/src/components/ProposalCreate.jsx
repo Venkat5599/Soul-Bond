@@ -53,12 +53,12 @@ export default function ProposalCreate() {
     setSending(true)
     try {
       // 1. Create and upload proposal metadata to IPFS
-      toast.loading('Uploading metadata...', { id: 'proposal' })
+      toast.loading('💌 Preparing your heartfelt message...', { id: 'proposal' })
       const metadata = createProposalMetadata({ senderName, receiverName, message })
       const metadataURI = await uploadMetadataToIPFS(metadata)
 
       // 2. Call smart contract to mint proposal NFT
-      toast.loading('Minting Proposal NFT...', { id: 'proposal' })
+      toast.loading('💖 Sending your proposal to the blockchain...', { id: 'proposal' })
       const result = await createProposalOnChain(signer, {
         recipient: recipientAddress,
         message: message || '',
