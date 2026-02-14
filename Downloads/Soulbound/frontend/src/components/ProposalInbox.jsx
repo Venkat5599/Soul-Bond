@@ -52,15 +52,28 @@ export default function ProposalInbox() {
     setMintingNFT(true)
 
     try {
-      // Use a simple placeholder image instead of generating
-      const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgZmlsbD0iIzFhMGEyZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjZmY2OWI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5KWPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U291bEJvdW5kPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjUlIiBmb250LXNpemU9IjE2IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuNSkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZvcmdlZCBGb3JldmVyPC90ZXh0Pjwvc3ZnPg=='
+      // Pick a random NFT image from the public folder
+      // You can add more images: nft-1.png, nft-2.png, nft-3.png, etc.
+      const nftImages = ['nft-1.png', 'nft-2.png', 'nft-3.png', 'nft-4.png', 'nft-5.png']
+      const randomImage = nftImages[Math.floor(Math.random() * nftImages.length)]
+      const imageUrl = `/nft-images/${randomImage}`
       
-      setGeneratedImage(placeholderImage)
+      // Convert image URL to data URL for IPFS upload
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      const reader = new FileReader()
+      
+      const imageDataURL = await new Promise((resolve) => {
+        reader.onloadend = () => resolve(reader.result)
+        reader.readAsDataURL(blob)
+      })
+      
+      setGeneratedImage(imageDataURL)
 
       // 1. Upload image to IPFS
       toast.loading('✨ Capturing your beautiful moment...', { id: 'mint' })
       const imageURI = await uploadImageToIPFS(
-        placeholderImage,
+        imageDataURL,
         `${proposal.senderName}-${proposal.receiverName}`
       )
 
@@ -86,7 +99,7 @@ export default function ProposalInbox() {
         txHash: result.txHash,
         senderName: proposal.senderName,
         receiverName: proposal.receiverName,
-        image: placeholderImage
+        image: imageDataURL
       })
 
       toast.success('SoulBound Couple NFT minted on-chain! 🎉', { id: 'mint' })
