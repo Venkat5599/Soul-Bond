@@ -69,9 +69,7 @@ export default function Hero() {
           className={`mt-5 text-sm sm:text-base max-w-[420px] leading-relaxed
             ${isDark ? 'text-white/55' : 'text-black/45'}`}
         >
-          Bridging the gap between online and offline,
-          <br />
-          where real bonds are forged and nurtured
+          Forge immutable, non-transferable bonds on the blockchain
         </motion.p>
       </div>
 
