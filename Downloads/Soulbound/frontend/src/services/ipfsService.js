@@ -82,7 +82,8 @@ export async function uploadMetadataToIPFS(metadata) {
     // Fallback: create a data URL with JSON
     console.warn('Pinata not configured — using data URL fallback for metadata')
     const jsonStr = JSON.stringify(metadata)
-    return `data:application/json;base64,${btoa(jsonStr)}`
+    // Use encodeURIComponent to handle special characters
+    return `data:application/json;charset=utf-8,${encodeURIComponent(jsonStr)}`
   }
 
   try {
@@ -110,7 +111,8 @@ export async function uploadMetadataToIPFS(metadata) {
   } catch (err) {
     console.error('IPFS metadata upload failed:', err)
     const jsonStr = JSON.stringify(metadata)
-    return `data:application/json;base64,${btoa(jsonStr)}`
+    // Use encodeURIComponent to handle special characters
+    return `data:application/json;charset=utf-8,${encodeURIComponent(jsonStr)}`
   }
 }
 
