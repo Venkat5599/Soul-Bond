@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, X, Clock, User, RefreshCw } from 'lucide-react'
-import CanvasGenerator, { generateCoupleImage } from './CanvasGenerator'
 import { useWeb3 } from '../context/Web3Context'
 import { useTheme } from '../context/ThemeContext'
 import { getProposalsForRecipient, acceptProposalOnChain, rejectProposalOnChain } from '../services/contractService'
@@ -42,9 +41,88 @@ export default function ProposalInbox() {
     fetchProposals()
   }, [account, provider])
 
-  const handleAccept = (proposal) => {
+  const handleAccept = async (proposal) => {
+    if (!signer) {
+      toast.error('Please connect your wallet')
+      return
+    }
+
     setCurrentProposal(proposal)
     setAcceptingId(proposal.tokenId)
+    setMintingNFT(true)
+
+    try {
+      // Use a simple placeholder image instead of generating
+      const placeholderImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgZmlsbD0iIzFhMGEyZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LXNpemU9IjgwIiBmaWxsPSIjZmY2OWI0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5KWPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U291bEJvdW5kPC90ZXh0Pjx0ZXh0IHg9IjUwJSIgeT0iNjUlIiBmb250LXNpemU9IjE2IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuNSkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkZvcmdlZCBGb3JldmVyPC90ZXh0Pjwvc3ZnPg=='
+      
+      setGeneratedImage(placeholderImage)
+
+      // 1. Upload image to IPFS
+      toast.loading('✨ Capturing your beautiful moment...', { id: 'mint' })
+      const imageURI = await uploadImageToIPFS(
+        placeholderImage,
+        `${proposal.senderName}-${proposal.receiverName}`
+      )
+
+      // 2. Create and upload metadata to IPFS
+      toast.loading('💫 Preserving your love story...', { id: 'mint' })
+      const metadata = createCoupleMetadata({
+        senderName: proposal.senderName,
+        receiverName: proposal.receiverName,
+        imageURI
+      })
+      const metadataURI = await uploadMetadataToIPFS(metadata)
+
+      // 3. Accept proposal on-chain (auto-mints CoupleNFT)
+      toast.loading('💝 Forging your eternal bond on-chain...', { id: 'mint' })
+      const result = await acceptProposalOnChain(
+        signer,
+        proposal.tokenId,
+        imageURI,
+        metadataURI
+      )
+
+      setMintedResult({
+        txHash: result.txHash,
+        senderName: proposal.senderName,
+        receiverName: proposal.receiverName,
+        image: placeholderImage
+      })
+
+      toast.success('SoulBound Couple NFT minted on-chain! 🎉', { id: 'mint' })
+      
+      // Trigger confetti celebration!
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff6b6b', '#ff69b4', '#9b59b6', '#e74c3c']
+      })
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#ff6b6b', '#ff69b4', '#9b59b6']
+        })
+      }, 250)
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#ff6b6b', '#ff69b4', '#9b59b6']
+        })
+      }, 400)
+    } catch (err) {
+      console.error('Minting failed:', err)
+      toast.error(`Minting failed: ${err.message || 'Unknown error'}`, { id: 'mint' })
+    } finally {
+      setMintingNFT(false)
+      setAcceptingId(null)
+    }
   }
 
   const handleReject = async (proposal) => {
@@ -208,37 +286,24 @@ export default function ProposalInbox() {
     )
   }
 
-  // Show image generation
-  if (acceptingId && currentProposal) {
-    // Get avatar data from localStorage
-    const avatarData = JSON.parse(localStorage.getItem('soulbound_avatars') || '{}')
-    const avatars = avatarData[currentProposal.tokenId] || {}
-
+  // Show minting progress
+  if (acceptingId && mintingNFT) {
     return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h2 className={`font-serif text-2xl font-bold mb-6 text-center ${isDark ? 'text-white' : 'text-[#1a1a1a]'}`}>
-          Forging Your Connection
-        </h2>
-
-        <CanvasGenerator
-          senderAvatar={avatars.senderAvatar}
-          receiverAvatar={avatars.receiverAvatar}
-          senderName={currentProposal.senderName}
-          receiverName={currentProposal.receiverName}
-          onComplete={(data) => handleImageGenerated(data, currentProposal)}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-16 h-16 border-4 border-pink-500/20 border-t-pink-500 rounded-full mx-auto mb-6"
         />
-
-        {mintingNFT && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center mt-6"
-          >
-            <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 ${isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/10'}`}>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-4 h-4 border-2 border-white/20 border-t-pink-500 rounded-full"
+        <h2 className={`font-serif text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-[#1a1a1a]'}`}>
+          Forging Your SoulBound Connection
+        </h2>
+        <p className={`text-sm ${isDark ? 'text-white/40' : 'text-[#1a1a1a]/40'}`}>
+          Please wait while we mint your NFT on-chain...
+        </p>
+      </motion.div>
+    )
+  }
               />
               <span className={`text-sm ${isDark ? 'text-white/60' : 'text-[#1a1a1a]/60'}`}>Minting SoulBound NFT on-chain...</span>
             </div>
