@@ -53,8 +53,14 @@ export default function ProposalInbox() {
 
     try {
       // Pick a random NFT image from the public folder
-      // You can add more images: nft-1.png, nft-2.png, nft-3.png, etc.
-      const nftImages = ['nft-1.png', 'nft-2.png', 'nft-3.png', 'nft-4.png', 'nft-5.png']
+      const nftImages = [
+        'WhatsApp Image 2026-02-14 at 8.38.42 PM.jpeg',
+        'WhatsApp Image 2026-02-14 at 8.39.35 PM.jpeg',
+        'WhatsApp Image 2026-02-14 at 8.40.36 PM.jpeg',
+        'WhatsApp Image 2026-02-14 at 8.42.10 PM.jpeg',
+        'WhatsApp Image 2026-02-14 at 8.42.33 PM.jpeg',
+        'WhatsApp Image 2026-02-14 at 8.42.38 PM.jpeg'
+      ]
       const randomImage = nftImages[Math.floor(Math.random() * nftImages.length)]
       const imageUrl = `/nft-images/${randomImage}`
       
