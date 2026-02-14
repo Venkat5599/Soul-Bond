@@ -52,16 +52,9 @@ export function Web3Provider({ children }) {
     setConnecting(true)
     try {
       const provider = new ethers.BrowserProvider(window.ethereum)
-      const accounts = await provider.send('eth_requestAccounts', [])
-      const signer = await provider.getSigner()
       const network = await provider.getNetwork()
 
-      setProvider(provider)
-      setSigner(signer)
-      setAccount(accounts[0])
-      setChainId(Number(network.chainId))
-
-      // Switch to target network if not already on it
+      // Check if we need to switch networks BEFORE requesting accounts
       if (Number(network.chainId) !== TARGET_CHAIN_ID) {
         try {
           await window.ethereum.request({
@@ -70,23 +63,37 @@ export function Web3Provider({ children }) {
           })
         } catch (switchError) {
           if (switchError.code === 4902) {
+            // Network doesn't exist, add it
             await window.ethereum.request({
               method: 'wallet_addEthereumChain',
               params: [TARGET_NETWORK],
             })
+          } else {
+            throw switchError
           }
         }
-        // Re-create provider/signer after chain switch
-        const newProvider = new ethers.BrowserProvider(window.ethereum)
-        const newSigner = await newProvider.getSigner()
-        setProvider(newProvider)
-        setSigner(newSigner)
+        // Wait a bit for network switch to complete
+        await new Promise(resolve => setTimeout(resolve, 1000))
       }
+
+      // Now request accounts after network is correct
+      const accounts = await provider.send('eth_requestAccounts', [])
+      const signer = await provider.getSigner()
+      const finalNetwork = await provider.getNetwork()
+
+      setProvider(provider)
+      setSigner(signer)
+      setAccount(accounts[0])
+      setChainId(Number(finalNetwork.chainId))
 
       toast.success('Wallet connected!')
     } catch (err) {
       console.error(err)
-      toast.error('Failed to connect wallet')
+      if (err.code === 4001) {
+        toast.error('Connection rejected')
+      } else {
+        toast.error('Failed to connect wallet')
+      }
     } finally {
       setConnecting(false)
     }
@@ -112,12 +119,34 @@ export function Web3Provider({ children }) {
           disconnectWallet()
         } else {
           setAccount(accounts[0])
+          toast.success('Account switched')
         }
       })
 
-      window.ethereum.on('chainChanged', () => {
-        window.location.reload()
+      window.ethereum.on('chainChanged', (chainIdHex) => {
+        const newChainId = parseInt(chainIdHex, 16)
+        setChainId(newChainId)
+        
+        // Only reload if we're on the wrong network
+        if (newChainId !== TARGET_CHAIN_ID) {
+          toast.error(`Please switch to ${TARGET_NETWORK.chainName}`)
+        } else {
+          toast.success('Network switched successfully')
+          // Refresh provider and signer
+          const provider = new ethers.BrowserProvider(window.ethereum)
+          provider.getSigner().then(signer => {
+            setProvider(provider)
+            setSigner(signer)
+          })
+        }
       })
+    }
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeAllListeners('accountsChanged')
+        window.ethereum.removeAllListeners('chainChanged')
+      }
     }
   }, [disconnectWallet])
 
