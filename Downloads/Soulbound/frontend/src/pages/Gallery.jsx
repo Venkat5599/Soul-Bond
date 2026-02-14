@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '../components/Navbar'
-import { ExternalLink, Download as DownloadIcon, RefreshCw } from 'lucide-react'
+import { ExternalLink, Download as DownloadIcon, RefreshCw, Share2 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useWeb3 } from '../context/Web3Context'
 import { getUserConnections } from '../services/contractService'
 import { resolveIPFSUrl } from '../services/ipfsService'
+import toast from 'react-hot-toast'
 
 export default function Gallery() {
   const [nfts, setNfts] = useState([])
@@ -38,6 +39,34 @@ export default function Gallery() {
     link.download = `soulbound-${name}.png`
     link.href = imageData
     link.click()
+  }
+
+  const handleShare = async (nft) => {
+    const shareText = `I just forged a SoulBound connection on the blockchain! 💖\n\nConnection #${nft.tokenId}\nForged: ${new Date(nft.timestamp).toLocaleDateString()}\n\nCheck it out on Sepolia Etherscan!`
+    const shareUrl = `https://sepolia.etherscan.io/token/${import.meta.env.VITE_COUPLE_NFT_ADDRESS}?a=${nft.tokenId}`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My SoulBound NFT',
+          text: shareText,
+          url: shareUrl,
+        })
+        toast.success('Shared successfully!')
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Share failed:', err)
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`)
+        toast.success('Link copied to clipboard!')
+      } catch (err) {
+        toast.error('Failed to copy link')
+      }
+    }
   }
 
   return (
@@ -115,6 +144,13 @@ export default function Gallery() {
                       })}
                     </p>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => handleShare(nft)}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs transition-colors ${isDark ? 'bg-pink-500/10 text-pink-400 hover:bg-pink-500/20' : 'bg-pink-500/10 text-pink-600 hover:bg-pink-500/20'}`}
+                      >
+                        <Share2 className="w-3 h-3" />
+                        Share
+                      </button>
                       {nft.imageURI && !nft.imageURI.startsWith('data:') && (
                         <a
                           href={resolveIPFSUrl(nft.imageURI)}

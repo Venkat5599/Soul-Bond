@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
 import { motion } from 'framer-motion'
@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, Shield, Heart, Zap, Lock, Globe, Sparkles } from 'lucide-react'
 import { useWeb3 } from '../context/Web3Context'
 import { useTheme } from '../context/ThemeContext'
+import { getContractStats } from '../services/contractService'
 
 const features = [
   {
@@ -48,8 +49,26 @@ const steps = [
 ]
 
 export default function Landing() {
-  const { connectWallet, account } = useWeb3()
+  const { connectWallet, account, provider } = useWeb3()
   const { isDark } = useTheme()
+  const [stats, setStats] = useState({ totalProposals: 0, totalConnections: 0 })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchStats() {
+      if (provider) {
+        try {
+          const data = await getContractStats(provider)
+          setStats(data)
+        } catch (err) {
+          console.error('Failed to fetch stats:', err)
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+    fetchStats()
+  }, [provider])
 
   return (
     <div className="min-h-screen">
@@ -57,6 +76,42 @@ export default function Landing() {
 
       {/* Hero */}
       <Hero />
+
+      {/* Live Stats */}
+      <section className={`py-16 px-6 border-b ${isDark ? 'bg-[#0a0a0a] border-white/5' : 'bg-white border-black/5'}`}>
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+          >
+            <div className="text-center">
+              <div className={`text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 bg-clip-text text-transparent`}>
+                {loading ? '...' : stats.totalProposals}
+              </div>
+              <div className={`text-sm ${isDark ? 'text-white/40' : 'text-black/40'}`}>Proposals Created</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 bg-clip-text text-transparent`}>
+                {loading ? '...' : stats.totalConnections}
+              </div>
+              <div className={`text-sm ${isDark ? 'text-white/40' : 'text-black/40'}`}>Bonds Forged</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 bg-clip-text text-transparent`}>
+                {loading ? '...' : stats.totalProposals - stats.totalConnections}
+              </div>
+              <div className={`text-sm ${isDark ? 'text-white/40' : 'text-black/40'}`}>Pending Proposals</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 bg-clip-text text-transparent`}>
+                ∞
+              </div>
+              <div className={`text-sm ${isDark ? 'text-white/40' : 'text-black/40'}`}>Forever Bonds</div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className={`py-24 px-6 ${isDark ? 'bg-[#0a0a0a]' : 'bg-[#f5f0e8]'}`}>
